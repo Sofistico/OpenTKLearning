@@ -14,7 +14,8 @@ namespace OpenTKLearning
         };
 
         private int _vertexBufferObject;
-
+        private int _vertexArrayObject;
+        private Shader _shader;
 
         public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = (width, height), Title = title })
         {
@@ -39,6 +40,30 @@ namespace OpenTKLearning
             _vertexBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
             GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+            _shader = new Shader("shader.vert", "shader.frag");
+
+            _vertexArrayObject = GL.GenVertexArray();
+            // ..:: Initialization code (done once (unless your object frequently changes)) :: ..
+            // 1. bind Vertex Array Object
+            GL.BindVertexArray(_vertexArrayObject);
+            // 2. copy our vertices array in a buffer for OpenGL to use
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexArrayObject);
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+
+            // 3. then set our vertex attributes pointers
+            GL.VertexAttribPointer(_shader.GetAttribLocation("aPosition"), 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+
+            GL.UseProgram(_vertexArrayObject);
+            GL.BindVertexArray(_vertexArrayObject);
+
+            _shader.Use();
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+        }
+
+        protected override void OnUnload()
+        {
+            _shader.Dispose();
         }
 
         protected override void OnRenderFrame(FrameEventArgs args)
